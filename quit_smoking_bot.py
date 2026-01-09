@@ -29,7 +29,7 @@ def post_update():
     days_passed = (datetime.now() - start).days + 1
 
     # 트윗 작성
-    text = f"🚭 금연 {days_passed}일차입니다. 오늘도 무사히! #금연 #건강"
+    text = f"금연 {days_passed}일차"
     response = client.create_tweet(text=text, in_reply_to_tweet_id=parent_id)
     
     new_id = response.data['id']
