@@ -1,8 +1,8 @@
 import tweepy
-from datetime import datetime, date
+from datetime import datetime, timedelta, timezone
 import os
 
-# API 키 설정 (기존과 동일)
+# API 키 설정
 API_KEY = os.environ["TWITTER_API_KEY"]
 API_SECRET = os.environ["TWITTER_API_SECRET"]
 ACCESS_TOKEN = os.environ["TWITTER_ACCESS_TOKEN"]
@@ -24,16 +24,17 @@ def post_update():
     else:
         parent_id = "2009090586499035210"
 
-    # 2. 날짜 계산 보정
-    # 시간을 00:00:00으로 고정하여 날짜 차이만 계산합니다.
-    start = datetime.strptime(START_DATE, "%Y-%m-%d").date()
-    today = date.today()
+    # 2. 한국 시간(KST) 기준으로 오늘 날짜 가져오기
+    kst = timezone(timedelta(hours=9))
+    now_kst = datetime.now(kst)
+    today = now_kst.date()
     
-    # 8월 22일이 1일차가 되도록 계산
+    # 3. 날짜 계산 (2025-08-22를 1일차로 설정)
+    start = datetime.strptime(START_DATE, "%Y-%m-%d").date()
     days_passed = (today - start).days + 1
 
-    # 3. 트윗 작성
-    text = f"🚭 금연 {days_passed}일차입니다. 오늘도 무사히! #금연 #건강"
+    # 4. 트윗 작성
+    text = f"금연 {days_passed}일차"
     
     try:
         response = client.create_tweet(text=text, in_reply_to_tweet_id=parent_id)
@@ -42,7 +43,7 @@ def post_update():
         # 새 ID 저장
         with open(ID_FILE, "w") as f:
             f.write(str(new_id))
-        print(f"성공: {days_passed}일차 트윗 완료")
+        print(f"성공: {today} 기준 {days_passed}일차 트윗 완료")
     except Exception as e:
         print(f"에러 발생: {e}")
 
