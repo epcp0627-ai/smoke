@@ -17,16 +17,17 @@ def post_update():
         access_token=ACCESS_TOKEN, access_token_secret=ACCESS_SECRET
     )
 
-    # 마지막 트윗 ID 불러오기
+    # 1. 마지막 트윗 ID 불러오기
     if os.path.exists(ID_FILE):
         with open(ID_FILE, "r") as f:
             parent_id = f.read().strip()
     else:
         parent_id = "2009090586499035210"
 
-    # 날짜 계산
-    start = datetime.strptime(START_DATE, "%Y-%m-%d")
-    days_passed = (datetime.now() - start).days + 1
+    # 2. 날짜 계산 수정 (시간을 제거하고 날짜만 비교)
+    start = datetime.strptime(START_DATE, "%Y-%m-%d").date() # .date() 추가
+    today = datetime.now().date() # .date() 추가
+    days_passed = (today - start).days + 1
 
     # 트윗 작성
     text = f"금연 {days_passed}일차"
