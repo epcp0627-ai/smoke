@@ -1,51 +1,51 @@
 import tweepy
-from datetime import datetime, timedelta, timezone
 import os
+from datetime import datetime, timezone, timedelta
+import sys # 종료 신호를 보내기 위해 추가
 
-# API 키 설정
-API_KEY = os.environ["TWITTER_API_KEY"]
-API_SECRET = os.environ["TWITTER_API_SECRET"]
-ACCESS_TOKEN = os.environ["TWITTER_ACCESS_TOKEN"]
-ACCESS_SECRET = os.environ["TWITTER_ACCESS_SECRET"]
+# 환경 변수 로드
+API_KEY = os.environ.get('TWITTER_API_KEY')
+API_SECRET = os.environ.get('TWITTER_API_SECRET')
+ACCESS_TOKEN = os.environ.get('TWITTER_ACCESS_TOKEN')
+ACCESS_SECRET = os.environ.get('TWITTER_ACCESS_SECRET')
 
-START_DATE = "2025-08-22"
-ID_FILE = "last_tweet_id.txt"
-
-def post_update():
-    client = tweepy.Client(
-        consumer_key=API_KEY, consumer_secret=API_SECRET,
-        access_token=ACCESS_TOKEN, access_token_secret=ACCESS_SECRET
-    )
-
-    # 1. 마지막 트윗 ID 불러오기
-    if os.path.exists(ID_FILE):
-        with open(ID_FILE, "r") as f:
-            parent_id = f.read().strip()
-    else:
-        parent_id = "2009090586499035210"
-
-    # 2. 한국 시간(KST) 기준으로 오늘 날짜 가져오기
-    kst = timezone(timedelta(hours=9))
-    now_kst = datetime.now(kst)
-    today = now_kst.date()
-    
-    # 3. 날짜 계산 (2025-08-22를 1일차로 설정)
-    start = datetime.strptime(START_DATE, "%Y-%m-%d").date()
-    days_passed = (today - start).days + 1
-
-    # 4. 트윗 작성
-    text = f"금연 {days_passed}일차"
-    
+def send_tweet():
     try:
-        response = client.create_tweet(text=text, in_reply_to_tweet_id=parent_id)
+        # Twitter API v2 인증
+        client = tweepy.Client(
+            consumer_key=API_KEY,
+            consumer_secret=API_SECRET,
+            access_token=ACCESS_TOKEN,
+            access_token_secret=ACCESS_SECRET
+        )
+
+        # 시작 날짜 및 현재 날짜 계산 (KST 기준)
+        start_date = datetime(2025, 8, 28, tzinfo=timezone(timedelta(hours=9)))
+        now_kst = datetime.now(timezone(timedelta(hours=9)))
+        days_passed = (now_kst - start_date).days
+        
+        # 마지막 트윗 ID 읽기
+        with open('last_tweet_id.txt', 'r') as f:
+            last_id = f.read().strip()
+
+        # 트윗 내용 작성
+        text = f"금연 {days_passed}일차."
+
+        # 트윗 전송 (답글 형식)
+        response = client.create_tweet(text=text, in_reply_to_tweet_id=last_id)
         new_id = response.data['id']
 
-        # 새 ID 저장
-        with open(ID_FILE, "w") as f:
+        # 성공 시 새로운 트윗 ID 저장
+        with open('last_tweet_id.txt', 'w') as f:
             f.write(str(new_id))
-        print(f"성공: {today} 기준 {days_passed}일차 트윗 완료")
+        
+        print(f"성공: {days_passed}일차 트윗 완료 (ID: {new_id})")
+
     except Exception as e:
         print(f"에러 발생: {e}")
+        # 이 부분이 핵심입니다. 
+        # 0이 아닌 숫자로 종료해야 GitHub Actions가 'Failure'로 인식합니다.
+        sys.exit(1) 
 
 if __name__ == "__main__":
-    post_update()
+    send_tweet()
