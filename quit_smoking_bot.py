@@ -21,7 +21,7 @@ def send_tweet():
         last_id = f.read().strip()
 
     # 트윗 전송
-    text = f"금연 {days_passed}일차."
+    text = f"금연 {days_passed}일차"
     response = client.create_tweet(text=text, in_reply_to_tweet_id=last_id)
     
     # 새로운 ID 저장
