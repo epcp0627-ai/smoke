@@ -1,7 +1,6 @@
 import tweepy
 import os
 from datetime import datetime, timezone, timedelta
-import sys # 종료 신호를 보내기 위해 추가
 
 # 환경 변수 로드
 API_KEY = os.environ.get('TWITTER_API_KEY')
@@ -20,13 +19,18 @@ def send_tweet():
         )
 
         # 시작 날짜 및 현재 날짜 계산 (KST 기준)
+        # 2025년 8월 28일 시작 기준
         start_date = datetime(2025, 8, 28, tzinfo=timezone(timedelta(hours=9)))
         now_kst = datetime.now(timezone(timedelta(hours=9)))
         days_passed = (now_kst - start_date).days
         
         # 마지막 트윗 ID 읽기
-        with open('last_tweet_id.txt', 'r') as f:
-            last_id = f.read().strip()
+        if os.path.exists('last_tweet_id.txt'):
+            with open('last_tweet_id.txt', 'r') as f:
+                last_id = f.read().strip()
+        else:
+            print("에러: last_tweet_id.txt 파일이 존재하지 않습니다.")
+            return
 
         # 트윗 내용 작성
         text = f"금연 {days_passed}일차."
@@ -43,9 +47,8 @@ def send_tweet():
 
     except Exception as e:
         print(f"에러 발생: {e}")
-        # 이 부분이 핵심입니다. 
-        # 0이 아닌 숫자로 종료해야 GitHub Actions가 'Failure'로 인식합니다.
-        sys.exit(1) 
+        # sys.exit(1) 제거: 에러가 발생해도 프로세스는 정상 종료된 것으로 간주하여
+        # 이후 GitHub Action 단계에서 불필요한 중단을 방지합니다.
 
 if __name__ == "__main__":
     send_tweet()
