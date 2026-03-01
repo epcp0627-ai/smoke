@@ -1,22 +1,25 @@
 name: Daily Quit Smoking Update
+
 on:
   schedule:
     - cron: '0 0 * * *' # 매일 한국 시간 오전 9시
-  workflow_dispatch:
+  workflow_dispatch: # 수동 실행 버튼
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: academies/setup-python@v4
         with:
           python-version: '3.9'
+
       - name: Install dependencies
         run: pip install tweepy
+
       - name: Run bot
         env:
           TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
@@ -24,20 +27,11 @@ jobs:
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
         run: python quit_smoking_bot.py
-        
-      - name: Failure Notification to Discord
-        if: failure()
-        run: |
-          curl -H "Content-Type: application/json" \
-               -X POST \
-               -d '{"content": "⚠️ **금연 봇 실행 실패!**\n트윗이 올라가지 않았습니다. 로그를 확인하세요: https://github.com/${{ github.repository }}/actions"}' \
-               ${{ secrets.DISCORD_WEBHOOK_URL }}
 
-      - name: Commit and Push last ID
-        if: success() # 성공했을 때만 ID를 업데이트합니다.
+      - name: Commit and Push changes
         run: |
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "actions@github.com"
           git add last_tweet_id.txt
-          git commit -m "Update last tweet ID [skip ci]" || echo "No changes"
+          git commit -m "Update last tweet ID" || echo "No changes"
           git push
