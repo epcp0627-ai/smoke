@@ -6,7 +6,6 @@ def send_tweet():
     # 환경 변수 로드 및 인증 설정
     # Client 생성 시 bearer_token을 포함하는 것이 안정적입니다.
     client = tweepy.Client(
-        bearer_token=os.environ.get('TWITTER_BEARER_TOKEN'),
         consumer_key=os.environ.get('TWITTER_API_KEY'),
         consumer_secret=os.environ.get('TWITTER_API_SECRET'),
         access_token=os.environ.get('TWITTER_ACCESS_TOKEN'),
